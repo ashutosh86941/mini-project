@@ -41,4 +41,18 @@ app.post('/register' ,async (req , res) =>{
     
 });
 
+app.get('/login' , (req , res) => {
+    res.render("login")
+});
+
+app.post('/login' ,async (req, res) => {
+    const {username , password} = req.body;
+    let user = await userModel.findOne({username});
+    if(!user) return res.send("wrong something is");
+
+    bcrypt.compare(password, user.password, function(err, result) {
+        res.send("yes u can login");
+    });
+})
+
 app.listen(3000);
