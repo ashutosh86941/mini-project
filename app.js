@@ -34,8 +34,6 @@ app.post('/register' ,async (req , res) =>{
     });
 
     var token = jwt.sign({ email:email}, 'shhhhh');
-     
-    
     res.cookie("token" , token);
     res.redirect("/");
     
@@ -46,13 +44,40 @@ app.get('/login' , (req , res) => {
 });
 
 app.post('/login' ,async (req, res) => {
-    const {username , password} = req.body;
-    let user = await userModel.findOne({username});
-    if(!user) return res.send("wrong something is");
+    let {email , password} = req.body;
+    let user = await userModel.findOne({email});
+    if(!user) return res.status(500).send("wrong something is");
 
     bcrypt.compare(password, user.password, function(err, result) {
-        res.send("yes u can login");
+        if(result){
+            var token = jwt.sign({ email:email}, 'shhhhh');
+            res.cookie("token" , token);
+            res.status(200).send("yes u can login");
+        }else{ 
+            res.redirect("/login");
+        }
     });
+    
+})
+
+app.get('/logout' , (req , res) => {
+    res.cookie("token" , "");
+    res.redirect("/login");
+});
+
+function isLoggedin(req, res, next){
+
+    if(req.cookies.token === "") {return res.send("you must be logged in first");}
+    else {
+        var data = jwt.verify(req.cookies.token, 'shhhhh');
+        req.user = data;
+        next();
+    }
+    
+}
+
+app.get('/profile' , isLoggedin , (req, res) => {
+    res.send(`hello, ${req.user.email}`);
 })
 
 app.listen(3000);
